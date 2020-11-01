@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
-import ReactDOM from 'react-dom'
+import {Container, Card, CardBody, CardHeader, Collapse} from 'reactstrap'
 import { connect } from 'react-redux'
 import PluginConfigurationForm from './../ServerConfig/PluginConfigurationForm'
-import {Container, Card, CardBody, CardHeader, Collapse} from 'reactstrap'
+import EmbeddedPluginConfigurationForm from './EmbeddedPluginConfigurationForm'
 
 class Dashboard extends Component {
   constructor(props) {
@@ -47,6 +47,7 @@ class Dashboard extends Component {
           return (
             <PluginCard
               plugin={plugin}
+              isConfigurator={isConfigurator(plugin)}
               key={i}
               isOpen={isOpen}
               toggleForm={this.toggleForm.bind(this, i, plugin.id)}
@@ -57,8 +58,10 @@ class Dashboard extends Component {
   }
 }
 
+const isConfigurator = (pluginData) => pluginData.keywords.includes('signalk-plugin-configurator')
+
 function saveData(id, data) {
-  fetch(`${window.serverRoutesPrefix}/plugins/${id}/config`, {
+  return fetch(`${window.serverRoutesPrefix}/plugins/${id}/config`, {
     method: 'POST',
     body: JSON.stringify(data),
     headers: new Headers({'Content-Type': 'application/json'}),
@@ -67,6 +70,7 @@ function saveData(id, data) {
     if (response.status != 200) {
       console.error(response)
       alert('Saving plugin settings failed')
+      throw Error('Saving plugin settings failed')
     }
   })
 }
@@ -83,8 +87,10 @@ class PluginCard extends Component {
     </CardHeader>
     <Collapse isOpen={this.props.isOpen}>
         <CardBody>
-        Package Name: {this.props.plugin.packageName}<br/>
-        <PluginConfigurationForm plugin={this.props.plugin} onSubmit={this.props.saveData}/>
+        {!this.props.isConfigurator && <PluginConfigurationForm
+          plugin={this.props.plugin}
+          onSubmit={this.props.saveData}/>}
+        {this.props.isConfigurator && <EmbeddedPluginConfigurationForm {...this.props}/>}
       </CardBody>
     </Collapse>
   </Card>
